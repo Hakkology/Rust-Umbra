@@ -1,11 +1,25 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub mod basic;
+pub mod input;
+pub mod math;
+pub mod registry;
+
+pub fn register_builtins() {
+    let mut registry = registry::global_registry().write().unwrap();
+    registry.register(math::AddNode);
+    registry.register(math::MultiplyNode);
+    registry.register(input::TimeNode);
+    registry.register(input::UVNode);
+    registry.register(input::FloatNode);
+    registry.register(input::ColorNode);
+    // Add other nodes as I refactor them or create new ones
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub enum PropertyValue {
+    Color(f32, f32, f32, f32),
     Float(f32),
     Vec2([f32; 2]),
     Vec3([f32; 3]),

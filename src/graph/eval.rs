@@ -1,4 +1,5 @@
 use crate::graph::UmbraNode;
+use crate::nodes::registry::global_registry;
 use crate::project::UmbraProject;
 use egui_snarl::{InPinId, NodeId, Snarl};
 use std::collections::HashMap;
@@ -117,22 +118,27 @@ impl Evaluator {
         let var_name = format!("node_{}", node_id.0);
 
         let result_expr = match node {
-            UmbraNode::Add => {
-                let a =
-                    Self::evaluate_input(snarl, node_id, 0, resolved_vars, code_lines, is_vertex);
-                let b =
-                    Self::evaluate_input(snarl, node_id, 1, resolved_vars, code_lines, is_vertex);
-                format!("({} + {})", a, b)
+            UmbraNode::Generic {
+                type_name,
+                properties,
+            } => {
+                if let Some(impl_node) = global_registry().read().unwrap().get(type_name) {
+                    let mut inputs = Vec::new();
+                    for i in 0..impl_node.inputs().len() {
+                        inputs.push(Self::evaluate_input(
+                            snarl,
+                            node_id,
+                            i,
+                            resolved_vars,
+                            code_lines,
+                            is_vertex,
+                        ));
+                    }
+                    impl_node.execute(&inputs, properties)
+                } else {
+                    format!("/* Unknown Node: {} */ 0.0", type_name)
+                }
             }
-            UmbraNode::Multiply => {
-                let a =
-                    Self::evaluate_input(snarl, node_id, 0, resolved_vars, code_lines, is_vertex);
-                let b =
-                    Self::evaluate_input(snarl, node_id, 1, resolved_vars, code_lines, is_vertex);
-                format!("({} * {})", a, b)
-            }
-            UmbraNode::Time => "uniforms.time".to_string(),
-            UmbraNode::UV => if is_vertex { "model.uv" } else { "in.uv" }.to_string(),
             UmbraNode::Position => if is_vertex {
                 "model.position"
             } else {
