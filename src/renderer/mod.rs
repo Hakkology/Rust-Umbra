@@ -1,11 +1,15 @@
 pub mod camera;
+pub mod gui;
 pub mod pipeline;
 pub mod primitives;
 pub mod uniforms;
 
 use self::camera::{Camera, CameraController};
+use self::gui::Gui;
 use self::pipeline::Pipeline;
 use self::uniforms::Uniforms;
+use crate::graph::GraphEditor;
+use std::sync::Arc;
 
 pub struct Renderer {
     pub surface: wgpu::Surface<'static>,
@@ -17,6 +21,8 @@ pub struct Renderer {
     pub camera: Camera,
     pub camera_controller: CameraController,
     pub uniforms: Uniforms,
+    pub gui: Gui,
+    pub graph_editor: GraphEditor,
 }
 
 impl Renderer {
@@ -45,7 +51,7 @@ impl Renderer {
                     label: None,
                     required_features: wgpu::Features::empty(),
                     required_limits: wgpu::Limits::default(),
-                    memory_hints: Default::default(),
+                    memory_hints: wgpu::MemoryHints::default(),
                 },
                 None,
             )
@@ -129,6 +135,9 @@ impl Renderer {
         let mut uniforms = Uniforms::new();
         uniforms.resolution = [config.width as f32, config.height as f32];
 
+        let gui = Gui::new(Arc::clone(&window), &device, config.format);
+        let graph_editor = GraphEditor::new();
+
         Self {
             surface,
             device,
@@ -139,6 +148,8 @@ impl Renderer {
             camera,
             camera_controller,
             uniforms,
+            gui,
+            graph_editor,
         }
     }
 
@@ -150,6 +161,7 @@ impl Renderer {
             self.surface.configure(&self.device, &self.config);
             self.camera.aspect = self.config.width as f32 / self.config.height as f32;
             self.uniforms.resolution = [new_size.width as f32, new_size.height as f32];
+            self.gui.resize(new_size.width, new_size.height);
         }
     }
 
@@ -164,7 +176,15 @@ impl Renderer {
         );
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn handle_event(
+        &mut self,
+        window: &winit::window::Window,
+        event: &winit::event::WindowEvent,
+    ) -> bool {
+        self.gui.handle_event(window, event)
+    }
+
+    pub fn render(&mut self, window: &winit::window::Window) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -191,6 +211,7 @@ impl Renderer {
                         }),
                         store: wgpu::StoreOp::Store,
                     },
+                    depth_slice: None,
                 })],
                 depth_stencil_attachment: None,
                 occlusion_query_set: None,
@@ -206,6 +227,23 @@ impl Renderer {
             );
             render_pass.draw_indexed(0..self.pipeline.num_indices, 0, 0..1);
         }
+
+        // Render GUI
+        let graph_editor = &mut self.graph_editor;
+        self.gui.render(
+            window,
+            &self.device,
+            &self.queue,
+            &mut encoder,
+            &view,
+            |ctx| {
+                egui::SidePanel::right("node_editor")
+                    .min_width(400.0)
+                    .show(ctx, |ui| {
+                        graph_editor.draw(ui, "umbra_node_graph");
+                    });
+            },
+        );
 
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();

@@ -51,6 +51,10 @@ impl ApplicationHandler for App {
             return;
         };
 
+        if renderer.handle_event(self.window.as_ref().unwrap(), &event) {
+            return;
+        }
+
         match event {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
@@ -109,7 +113,7 @@ impl ApplicationHandler for App {
                 self.last_render_time = now;
 
                 renderer.update(dt);
-                match renderer.render() {
+                match renderer.render(self.window.as_ref().unwrap()) {
                     Ok(_) => {}
                     Err(wgpu::SurfaceError::Lost) => renderer.resize(renderer.size),
                     Err(wgpu::SurfaceError::OutOfMemory) => event_loop.exit(),

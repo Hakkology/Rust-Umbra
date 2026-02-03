@@ -13,6 +13,12 @@ pub enum PropertyValue {
     Bool(bool),
 }
 
+impl Default for PropertyValue {
+    fn default() -> Self {
+        PropertyValue::Float(0.0)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Property {
     pub name: String,
