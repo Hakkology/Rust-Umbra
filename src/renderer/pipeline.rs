@@ -90,7 +90,13 @@ impl Pipeline {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: super::Renderer::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -127,11 +133,27 @@ impl Pipeline {
         device: &wgpu::Device,
         config: &wgpu::SurfaceConfiguration,
         shader_source: &str,
+        uniform_size: u64,
     ) {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
+
+        // Recreate uniform buffer if size changed
+        if self.uniform_buffer.size() != uniform_size {
+            log::info!(
+                "Recreating uniform buffer: {} -> {}",
+                self.uniform_buffer.size(),
+                uniform_size
+            );
+            self.uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Uniform Buffer (Dynamic)"),
+                size: uniform_size,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+        }
 
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -147,6 +169,16 @@ impl Pipeline {
                 }],
                 label: Some("uniform_bind_group_layout"),
             });
+
+        // Recreate bind group to point to the (potentially new) buffer
+        self.uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &uniform_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: self.uniform_buffer.as_entire_binding(),
+            }],
+            label: Some("uniform_bind_group"),
+        });
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -183,7 +215,13 @@ impl Pipeline {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: super::Renderer::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,

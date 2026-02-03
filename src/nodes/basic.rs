@@ -1,6 +1,7 @@
 use super::{Property, PropertyValue, ShaderNode};
 use std::collections::HashMap;
 
+#[allow(dead_code)]
 pub struct AddNode;
 impl ShaderNode for AddNode {
     fn name(&self) -> &'static str {
@@ -14,6 +15,7 @@ impl ShaderNode for AddNode {
     }
 }
 
+#[allow(dead_code)]
 pub struct MultiplyNode;
 impl ShaderNode for MultiplyNode {
     fn name(&self) -> &'static str {
@@ -27,6 +29,7 @@ impl ShaderNode for MultiplyNode {
     }
 }
 
+#[allow(dead_code)]
 pub struct TimeNode;
 impl ShaderNode for TimeNode {
     fn name(&self) -> &'static str {
@@ -40,6 +43,7 @@ impl ShaderNode for TimeNode {
     }
 }
 
+#[allow(dead_code)]
 pub struct UVNode;
 impl ShaderNode for UVNode {
     fn name(&self) -> &'static str {
@@ -53,6 +57,7 @@ impl ShaderNode for UVNode {
     }
 }
 
+#[allow(dead_code)]
 pub struct FloatNode;
 impl ShaderNode for FloatNode {
     fn name(&self) -> &'static str {

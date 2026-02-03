@@ -1,6 +1,7 @@
 mod export;
 mod graph;
 mod nodes;
+mod project;
 mod renderer;
 
 use renderer::Renderer;

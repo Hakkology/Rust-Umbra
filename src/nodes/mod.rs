@@ -4,6 +4,7 @@ use std::collections::HashMap;
 pub mod basic;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum PropertyValue {
     Float(f32),
     Vec2([f32; 2]),
@@ -20,16 +21,19 @@ impl Default for PropertyValue {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct Property {
     pub name: String,
     pub value: PropertyValue,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum ShaderIR {
     Expr(String),
 }
 
+#[allow(dead_code)]
 pub trait ShaderNode: Send + Sync {
     fn name(&self) -> &'static str;
     fn execute(&self, inputs: &[String], properties: &HashMap<String, PropertyValue>) -> String;

@@ -49,7 +49,7 @@ impl Gui {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         view: &TextureView,
-        mut run_ui: impl FnMut(&egui::Context),
+        run_ui: impl FnMut(&egui::Context),
     ) {
         let raw_input = self.state.take_egui_input(window);
         let full_output = self.ctx.run(raw_input, run_ui);
@@ -69,7 +69,7 @@ impl Gui {
             .update_buffers(device, queue, encoder, &tris, &self.screen_descriptor);
 
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Egui Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view,
