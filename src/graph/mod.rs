@@ -208,69 +208,7 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
     #[allow(refining_impl_trait)]
     fn show_graph_menu(&mut self, pos: egui::Pos2, ui: &mut Ui, snarl: &mut Snarl<UmbraNode>) {
         ui.label("Add Node");
-
-        let registry = global_registry().read().unwrap();
-        let mut categories: HashMap<
-            String,
-            Vec<std::sync::Arc<dyn crate::nodes::registry::NodeImpl>>,
-        > = HashMap::new();
-
-        for node in registry.list() {
-            let cat = node.category();
-            let cat_name = cat.first().cloned().unwrap_or("Uncategorized".to_string());
-            categories.entry(cat_name).or_default().push(node);
-        }
-
-        // Collect and sort categories to ensure stable UI IDs
-        let mut sorted_categories: Vec<_> = categories.into_iter().collect();
-        sorted_categories.sort_by(|(a, _), (b, _)| a.cmp(b));
-
-        for (category, mut nodes) in sorted_categories {
-            // Sort nodes within category for stability
-            nodes.sort_by(|a, b| a.name().cmp(b.name()));
-
-            ui.menu_button(&category, |ui| {
-                for node in nodes {
-                    if ui.button(node.name()).clicked() {
-                        let mut properties = HashMap::new();
-                        for prop in node.define_properties() {
-                            properties.insert(prop.name, prop.value);
-                        }
-                        snarl.insert_node(
-                            pos,
-                            UmbraNode::Generic {
-                                type_name: node.name().to_string(),
-                                properties,
-                            },
-                        );
-                        ui.close();
-                    }
-                }
-            });
-        }
-
-        ui.separator();
-
-        if ui.button("Float").clicked() {
-            snarl.insert_node(pos, UmbraNode::Float(0.0));
-            ui.close();
-        }
-        if ui.button("Float4").clicked() {
-            snarl.insert_node(pos, UmbraNode::Float4(0.0, 0.0, 0.0, 0.0));
-            ui.close();
-        }
-        if ui.button("Color").clicked() {
-            snarl.insert_node(pos, UmbraNode::Color(1.0, 1.0, 1.0, 1.0));
-            ui.close();
-        }
-        if ui.button("Property").clicked() {
-            snarl.insert_node(pos, UmbraNode::Property("unnamed".to_string()));
-            ui.close();
-        }
-        if ui.button("Position").clicked() {
-            snarl.insert_node(pos, UmbraNode::Position);
-            ui.close();
-        }
+        show_add_node_menu(ui, pos, snarl);
     }
 }
 
@@ -292,12 +230,73 @@ impl GraphEditor {
 
     pub fn draw(&mut self, ui: &mut egui::Ui, id_source: impl std::hash::Hash) {
         let style = egui_snarl::ui::SnarlStyle::new();
-        // Customizing style
-        // Note: Exact fields depend on egui-snarl version. Assuming some defaults.
-        // If compilation fails, I will fix it.
-        // v0.9 usually has simple fields.
-
         self.snarl.show(&mut UmbraViewer, &style, id_source, ui);
+    }
+
+    pub fn show_node_menu(&mut self, ui: &mut egui::Ui, pos: egui::Pos2) {
+        show_add_node_menu(ui, pos, &mut self.snarl);
+    }
+}
+
+// Standalone helper for adding nodes context menu
+pub fn show_add_node_menu(ui: &mut egui::Ui, pos: egui::Pos2, snarl: &mut Snarl<UmbraNode>) {
+    let registry = global_registry().read().unwrap();
+    let mut categories: HashMap<String, Vec<std::sync::Arc<dyn crate::nodes::registry::NodeImpl>>> =
+        HashMap::new();
+
+    for node in registry.list() {
+        let cat = node.category();
+        let cat_name = cat.first().cloned().unwrap_or("Uncategorized".to_string());
+        categories.entry(cat_name).or_default().push(node);
+    }
+
+    let mut sorted_categories: Vec<_> = categories.into_iter().collect();
+    sorted_categories.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+    for (category, mut nodes) in sorted_categories {
+        nodes.sort_by(|a, b| a.name().cmp(b.name()));
+
+        ui.menu_button(&category, |ui| {
+            for node in nodes {
+                if ui.button(node.name()).clicked() {
+                    let mut properties = HashMap::new();
+                    for prop in node.define_properties() {
+                        properties.insert(prop.name, prop.value);
+                    }
+                    snarl.insert_node(
+                        pos,
+                        UmbraNode::Generic {
+                            type_name: node.name().to_string(),
+                            properties,
+                        },
+                    );
+                    ui.close();
+                }
+            }
+        });
+    }
+
+    ui.separator();
+
+    if ui.button("Float").clicked() {
+        snarl.insert_node(pos, UmbraNode::Float(0.0));
+        ui.close();
+    }
+    if ui.button("Float4").clicked() {
+        snarl.insert_node(pos, UmbraNode::Float4(0.0, 0.0, 0.0, 0.0));
+        ui.close();
+    }
+    if ui.button("Color").clicked() {
+        snarl.insert_node(pos, UmbraNode::Color(1.0, 1.0, 1.0, 1.0));
+        ui.close();
+    }
+    if ui.button("Property").clicked() {
+        snarl.insert_node(pos, UmbraNode::Property("unnamed".to_string()));
+        ui.close();
+    }
+    if ui.button("Position").clicked() {
+        snarl.insert_node(pos, UmbraNode::Position);
+        ui.close();
     }
 }
 

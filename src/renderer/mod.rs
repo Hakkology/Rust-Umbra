@@ -24,6 +24,7 @@ pub struct Renderer {
     pub size: winit::dpi::PhysicalSize<u32>,
     pub pipeline: Pipeline,
     pub gui: Gui,
+    pub ui_manager: crate::ui::UiManager,
     pub project: UmbraProject,
     pub generated_shader: String,
     pub camera: Camera,
@@ -198,6 +199,14 @@ impl Renderer {
         let project = UmbraProject::new();
         let generated_shader = String::new();
 
+        // Initialize UiManager
+        let mut ui_manager = crate::ui::UiManager::new();
+        ui_manager.register_view(
+            "properties",
+            Box::new(crate::ui::PropertiesPanel),
+            true, // Default open
+        );
+
         Self {
             surface,
             device,
@@ -206,6 +215,7 @@ impl Renderer {
             size,
             pipeline,
             gui,
+            ui_manager,
             project,
             generated_shader,
             camera,
@@ -371,6 +381,7 @@ impl Renderer {
         let project = &mut self.project;
         let generated_shader = &mut self.generated_shader;
         let preview_id = self.preview_id;
+        let ui_manager = &mut self.ui_manager;
 
         let mut apply_shader = false;
 
@@ -381,33 +392,62 @@ impl Renderer {
             &mut encoder,
             &view,
             |ctx| {
-                // Apply theme once or ensure it's set.
-                // Ideally this is done once, but doing it every frame is cheap for `visuals` check,
-                // though strictly `ctx.set_visuals` triggers a full repaint.
-                // Better to do it in `new`. But we don't have easy access to `ctx` in `new` unless we expose it from `Gui`.
-                // For now let's just do it here if it's the first frame (cheat) or assume it's cheap.
-                // Actually `set_visuals` is robust.
-                // But better: expose access in `Gui`.
-                // Let's assume we did it in `Gui::new` or we accept doing it here once.
-                // Or: `crate::ui::theme::apply_theme(ctx);`
                 if ctx.style().visuals.dark_mode {
-                    // already dark, maybe check custom flag?
-                    // Just apply it.
                     crate::ui::theme::apply_theme(ctx);
                 }
 
-                egui::SidePanel::right("renderer_area")
-                    .resizable(true)
-                    .default_width(self.size.width as f32 * 0.4)
-                    .show(ctx, |ui| {
-                        crate::ui::PropertiesPanel {
-                            project,
-                            generated_shader,
-                            apply_shader: &mut apply_shader,
-                            preview_texture_id: preview_id,
-                        }
-                        .show(ui);
+                egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.menu_button("File", |ui| {
+                            if ui.button("New").clicked() {
+                                *project = crate::project::UmbraProject::new();
+                                ui.close();
+                            }
+                            if ui.button("Save").clicked() {
+                                if let Some(_path) = project.save_as_dialog() {
+                                    // Project name logic could be updated here
+                                }
+                                ui.close();
+                            }
+                            if ui.button("Load").clicked() {
+                                if let Some(new_project) =
+                                    crate::project::UmbraProject::load_dialog()
+                                {
+                                    *project = new_project;
+                                }
+                                ui.close();
+                            }
+                            ui.separator();
+                            if ui.button("Export Shader").clicked() {
+                                // Add export logic or reused save dialog
+                                ui.close();
+                            }
+                        });
+
+                        ui.menu_button("Node", |ui| {
+                            let pos = ui.cursor().min + egui::vec2(0.0, 20.0);
+                            crate::graph::show_add_node_menu(ui, pos, &mut project.graph.snarl);
+                        });
+
+                        ui.menu_button("Window", |ui| {
+                            let is_open = ui_manager.is_open("properties");
+                            if ui.checkbox(&mut { is_open }, "Properties").clicked() {
+                                ui_manager.toggle("properties");
+                            }
+                        });
                     });
+                });
+
+                // Create AppContext
+                let mut app_context = crate::ui::AppContext {
+                    project,
+                    generated_shader,
+                    apply_shader: &mut apply_shader,
+                    preview_texture_id: preview_id,
+                };
+
+                // Render all registered views
+                ui_manager.show(ctx, &mut app_context);
 
                 egui::CentralPanel::default().show(ctx, |ui| {
                     project.graph.draw(ui, "umbra_node_graph");

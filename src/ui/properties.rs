@@ -1,16 +1,35 @@
 use crate::common::PropertyValue;
-use crate::project::UmbraProject;
+use crate::ui::framework::AppContext;
 use egui::Ui;
 
-pub struct PropertiesPanel<'a> {
-    pub project: &'a mut UmbraProject,
-    pub generated_shader: &'a mut String,
-    pub apply_shader: &'a mut bool,
-    pub preview_texture_id: egui::TextureId,
+use crate::ui::window::{WindowConfig, WindowContent, WindowKind};
+
+pub struct PropertiesPanel;
+
+impl WindowContent for PropertiesPanel {
+    fn config(&self) -> WindowConfig {
+        WindowConfig {
+            title: "Properties".to_string(),
+            kind: WindowKind::PanelRight,
+            default_width: 300.0,
+            ..Default::default()
+        }
+    }
+
+    fn show(&mut self, ui: &mut Ui, app_context: &mut AppContext) {
+        self.render_content(ui, app_context);
+    }
 }
 
-impl<'a> PropertiesPanel<'a> {
-    pub fn show(self, ui: &mut Ui) {
+impl PropertiesPanel {
+    fn render_content(&self, ui: &mut Ui, app_context: &mut AppContext) {
+        let AppContext {
+            project,
+            generated_shader,
+            apply_shader,
+            preview_texture_id,
+        } = app_context;
+
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.vertical_centered(|ui| {
                 ui.heading("Renderer Preview");
@@ -22,7 +41,7 @@ impl<'a> PropertiesPanel<'a> {
             let height = width;
 
             ui.image(egui::load::SizedTexture::new(
-                self.preview_texture_id,
+                *preview_texture_id,
                 egui::vec2(width, height),
             ));
 
@@ -32,20 +51,18 @@ impl<'a> PropertiesPanel<'a> {
             ui.collapsing("Shader Properties", |ui| {
                 ui.horizontal(|ui| {
                     if ui.button("Add Float").clicked() {
-                        self.project
-                            .add_property("new_float", PropertyValue::Float(0.0));
+                        project.add_property("new_float", PropertyValue::Float(0.0));
                     }
                     if ui.button("Add Vec4").clicked() {
-                        self.project
-                            .add_property("new_vec4", PropertyValue::Vec4([0.0; 4]));
+                        project.add_property("new_vec4", PropertyValue::Vec4([0.0; 4]));
                     }
                     if ui.button("Add Color").clicked() {
-                        self.project
+                        project
                             .add_property("new_color", PropertyValue::Color([1.0, 1.0, 1.0, 1.0]));
                     }
                 });
 
-                for prop in self.project.properties.iter_mut() {
+                for prop in project.properties.iter_mut() {
                     ui.horizontal(|ui| {
                         ui.label(&prop.name);
                         match &mut prop.value {
@@ -75,16 +92,16 @@ impl<'a> PropertiesPanel<'a> {
                     // We need to call evaluator here.
                     // Since we can't easily import circular dependencies if `evaluator` is in `graph`,
                     // we'll assume `evaluator` is accessible via `crate::graph::eval::Evaluator`.
-                    *self.generated_shader = crate::graph::eval::Evaluator::evaluate(self.project);
-                    *self.apply_shader = true;
+                    **generated_shader = crate::graph::eval::Evaluator::evaluate(project);
+                    **apply_shader = true;
                 }
             });
 
-            if !self.generated_shader.is_empty() {
+            if !generated_shader.is_empty() {
                 ui.add_space(10.0);
                 ui.label("Generated WGSL:");
                 ui.add(
-                    egui::TextEdit::multiline(self.generated_shader)
+                    egui::TextEdit::multiline(&mut **generated_shader)
                         .font(egui::TextStyle::Monospace)
                         .code_editor()
                         .lock_focus(true)
