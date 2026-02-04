@@ -37,4 +37,44 @@ impl UmbraProject {
             value,
         });
     }
+
+    pub fn save(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let json = serde_json::to_string_pretty(self)?;
+        std::fs::write(path, json)?;
+        Ok(())
+    }
+
+    pub fn load(path: &std::path::Path) -> std::io::Result<Self> {
+        let data = std::fs::read_to_string(path)?;
+        let project: Self = serde_json::from_str(&data)?;
+        Ok(project)
+    }
+
+    pub fn save_as_dialog(&self) -> Option<std::path::PathBuf> {
+        let path = rfd::FileDialog::new()
+            .add_filter("Umbra Project", &["umbra"])
+            .set_file_name(&format!("{}.umbra", self.name))
+            .save_file();
+
+        if let Some(path) = &path {
+            if let Err(e) = self.save(path) {
+                eprintln!("Failed to save project: {}", e);
+            }
+        }
+        path
+    }
+
+    pub fn load_dialog() -> Option<Self> {
+        let path = rfd::FileDialog::new()
+            .add_filter("Umbra Project", &["umbra"])
+            .pick_file();
+
+        if let Some(path) = path {
+            match Self::load(&path) {
+                Ok(project) => return Some(project),
+                Err(e) => eprintln!("Failed to load project: {}", e),
+            }
+        }
+        None
+    }
 }

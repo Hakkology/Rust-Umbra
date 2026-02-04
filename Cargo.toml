@@ -22,3 +22,4 @@ egui-wgpu = "0.33"
 egui-winit = "0.33"
 egui-snarl = { version = "0.9.0", features = ["serde"] }
 russimp = "3.2.1"
+rfd = "0.17.2"
