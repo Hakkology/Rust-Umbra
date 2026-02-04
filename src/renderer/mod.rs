@@ -382,6 +382,14 @@ impl Renderer {
             render_pass.draw_indexed(0..self.pipeline.num_indices, 0, 0..1);
         }
 
+        // Update generated shader
+        let newly_generated = crate::graph::eval::Evaluator::evaluate(
+            &self.project,
+            crate::file::export::TargetFormat::Wgsl,
+        );
+        if newly_generated != self.generated_shader {
+            self.generated_shader = newly_generated;
+        }
         // 2. Render GUI
         let project = &mut self.project;
         let generated_shader = &mut self.generated_shader;
@@ -422,13 +430,44 @@ impl Renderer {
                                 ui.close();
                             }
                             ui.separator();
-                            if ui.button("Export Shader").clicked() {
-                                crate::file::export::save_wgsl_dialog(
-                                    generated_shader,
-                                    &project.name,
-                                );
-                                ui.close();
-                            }
+                            ui.menu_button("Export Shader", |ui| {
+                                if ui.button("Godot (.gdshader)").clicked() {
+                                    let code = crate::graph::eval::Evaluator::evaluate(
+                                        project,
+                                        crate::file::export::TargetFormat::Godot,
+                                    );
+                                    crate::file::export::export_shader_dialog(
+                                        &code,
+                                        &project.name,
+                                        crate::file::export::TargetFormat::Godot,
+                                    );
+                                    ui.close();
+                                }
+                                if ui.button("Generic (.shader)").clicked() {
+                                    let code = crate::graph::eval::Evaluator::evaluate(
+                                        project,
+                                        crate::file::export::TargetFormat::Generic,
+                                    );
+                                    crate::file::export::export_shader_dialog(
+                                        &code,
+                                        &project.name,
+                                        crate::file::export::TargetFormat::Generic,
+                                    );
+                                    ui.close();
+                                }
+                                if ui.button("WGPU (.wgsl)").clicked() {
+                                    let code = crate::graph::eval::Evaluator::evaluate(
+                                        project,
+                                        crate::file::export::TargetFormat::Wgsl,
+                                    );
+                                    crate::file::export::export_shader_dialog(
+                                        &code,
+                                        &project.name,
+                                        crate::file::export::TargetFormat::Wgsl,
+                                    );
+                                    ui.close();
+                                }
+                            });
                         });
 
                         ui.menu_button("Node", |ui| {

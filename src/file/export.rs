@@ -1,10 +1,40 @@
 use std::fs;
 use std::path::PathBuf;
 
-pub fn save_wgsl_dialog(shader_code: &str, project_name: &str) -> Option<PathBuf> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetFormat {
+    Wgsl,
+    Godot,
+    Generic,
+}
+
+impl TargetFormat {
+    pub fn extension(&self) -> &str {
+        match self {
+            TargetFormat::Wgsl => "wgsl",
+            TargetFormat::Godot => "gdshader",
+            TargetFormat::Generic => "shader",
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            TargetFormat::Wgsl => "WGSL",
+            TargetFormat::Godot => "Godot Shader",
+            TargetFormat::Generic => "Generic Shader",
+        }
+    }
+}
+
+pub fn export_shader_dialog(
+    shader_code: &str,
+    project_name: &str,
+    format: TargetFormat,
+) -> Option<PathBuf> {
+    let ext = format.extension();
     let path = rfd::FileDialog::new()
-        .add_filter("WGSL Shader", &["wgsl"])
-        .set_file_name(&format!("{}.wgsl", project_name))
+        .add_filter(format.name(), &[ext])
+        .set_file_name(&format!("{}.{}", project_name, ext))
         .save_file();
 
     if let Some(path) = &path {

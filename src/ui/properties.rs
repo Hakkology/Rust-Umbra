@@ -94,7 +94,10 @@ impl PropertiesPanel {
                     // We need to call evaluator here.
                     // Since we can't easily import circular dependencies if `evaluator` is in `graph`,
                     // we'll assume `evaluator` is accessible via `crate::graph::eval::Evaluator`.
-                    **generated_shader = crate::graph::eval::Evaluator::evaluate(project);
+                    **generated_shader = crate::graph::eval::Evaluator::evaluate(
+                        project,
+                        crate::file::export::TargetFormat::Wgsl,
+                    );
                     **apply_shader = true;
                 }
             });
