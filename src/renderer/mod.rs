@@ -444,6 +444,7 @@ impl Renderer {
                     generated_shader,
                     apply_shader: &mut apply_shader,
                     preview_texture_id: preview_id,
+                    time: self.uniforms.time,
                 };
 
                 // Render all registered views

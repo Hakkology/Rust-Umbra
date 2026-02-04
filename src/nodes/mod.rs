@@ -11,6 +11,10 @@ pub fn register_builtins() {
     let mut registry = registry::global_registry().write().unwrap();
     registry.register(math::AddNode);
     registry.register(math::MultiplyNode);
+    registry.register(math::SinNode);
+    registry.register(math::CosNode);
+    registry.register(math::FractNode);
+    registry.register(math::AbsNode);
     registry.register(input::TimeNode);
     registry.register(input::UVNode);
     registry.register(input::FloatNode);

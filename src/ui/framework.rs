@@ -7,6 +7,7 @@ pub struct AppContext<'a> {
     pub generated_shader: &'a mut String,
     pub apply_shader: &'a mut bool,
     pub preview_texture_id: egui::TextureId,
+    pub time: f32,
 }
 
 /// Helper just for View (optional, if we still need raw View)
