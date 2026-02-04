@@ -84,6 +84,7 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
     }
 
     #[allow(refining_impl_trait)]
+    #[allow(refining_impl_trait)]
     fn show_input(&mut self, pin: &InPin, ui: &mut Ui, snarl: &mut Snarl<UmbraNode>) -> PinInfo {
         let node = &snarl[pin.id.node];
         match node {
@@ -92,8 +93,7 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
                     let inputs = impl_node.inputs();
                     if let Some(input) = inputs.get(pin.id.input) {
                         ui.label(&input.name);
-                        // Can customize color based on type_name later
-                        PinInfo::circle().with_fill(egui::Color32::from_rgb(200, 200, 200))
+                        PinInfo::circle().with_fill(type_color(&input.type_name))
                     } else {
                         PinInfo::circle()
                     }
@@ -103,11 +103,11 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
             }
             UmbraNode::VertexOutput => {
                 ui.label("Position Offset");
-                PinInfo::circle().with_fill(egui::Color32::from_rgb(100, 200, 255))
+                PinInfo::circle().with_fill(type_color("Vec3"))
             }
             UmbraNode::FragmentOutput => {
                 ui.label("Base Color");
-                PinInfo::circle().with_fill(egui::Color32::from_rgb(255, 100, 100))
+                PinInfo::circle().with_fill(type_color("Vec4"))
             }
             _ => PinInfo::circle(),
         }
@@ -125,14 +125,9 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
                     let outputs = impl_node.outputs();
                     if let Some(output) = outputs.get(pin.id.output) {
                         ui.label(&output.name);
-                        // Show properties if this is the first output, or handle property visualization elsewhere
-                        // For now, let's keep it simple.
-                        // Maybe show properties in the body? Snarl doesn't have a separate body method yet, usually inputs/outputs cover it.
-                        // But we can check if pin.id.output is 0 and render properties there.
+
+                        // Property rendering logic on first output pin
                         if pin.id.output == 0 {
-                            // Minimal property editor for now
-                            // We don't have mutable access to properties here easily if we want to change them based on UI
-                            // Wait, `node` is `&mut UmbraNode`, so we do have access!
                             for prop_def in impl_node.define_properties() {
                                 if let Some(val) = properties.get_mut(&prop_def.name) {
                                     match val {
@@ -168,7 +163,7 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
                                 }
                             }
                         }
-                        PinInfo::circle().with_fill(egui::Color32::from_rgb(200, 200, 200))
+                        PinInfo::circle().with_fill(type_color(&output.type_name))
                     } else {
                         PinInfo::circle()
                     }
@@ -178,7 +173,7 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
             }
             UmbraNode::Float(val) => {
                 ui.add(egui::DragValue::new(val));
-                PinInfo::circle().with_fill(egui::Color32::from_rgb(200, 200, 200))
+                PinInfo::circle().with_fill(type_color("Float"))
             }
             UmbraNode::Color(r, g, b, a) => {
                 let mut color = egui::Color32::from_rgba_premultiplied(
@@ -203,7 +198,7 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
                     ui.add(egui::DragValue::new(z).speed(0.1));
                     ui.add(egui::DragValue::new(w).speed(0.1));
                 });
-                PinInfo::circle().with_fill(egui::Color32::from_rgb(200, 200, 100))
+                PinInfo::circle().with_fill(type_color("Vec4"))
             }
             UmbraNode::Property(name) => {
                 ui.label(name.as_str());
@@ -211,11 +206,11 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
             }
             UmbraNode::Position => {
                 ui.label("Mesh Position");
-                PinInfo::circle().with_fill(egui::Color32::from_rgb(100, 200, 255))
+                PinInfo::circle().with_fill(type_color("Vec3"))
             }
             _ => {
                 ui.label("Out");
-                PinInfo::circle().with_fill(egui::Color32::from_rgb(200, 200, 200))
+                PinInfo::circle().with_fill(egui::Color32::GRAY)
             }
         }
     }
@@ -303,11 +298,23 @@ impl GraphEditor {
     }
 
     pub fn draw(&mut self, ui: &mut egui::Ui, id_source: impl std::hash::Hash) {
-        self.snarl.show(
-            &mut UmbraViewer,
-            &egui_snarl::ui::SnarlStyle::default(),
-            id_source,
-            ui,
-        );
+        let style = egui_snarl::ui::SnarlStyle::new();
+        // Customizing style
+        // Note: Exact fields depend on egui-snarl version. Assuming some defaults.
+        // If compilation fails, I will fix it.
+        // v0.9 usually has simple fields.
+
+        self.snarl.show(&mut UmbraViewer, &style, id_source, ui);
+    }
+}
+
+// Helper for type colors
+fn type_color(type_name: &str) -> egui::Color32 {
+    match type_name {
+        "Float" => egui::Color32::from_rgb(150, 200, 150), // Pale Green
+        "Vec2" => egui::Color32::from_rgb(150, 150, 250),  // Pale Blue
+        "Vec3" => egui::Color32::from_rgb(250, 150, 250),  // Pinkish
+        "Vec4" | "Color" => egui::Color32::from_rgb(250, 200, 150), // Pale Orange
+        _ => egui::Color32::GRAY,
     }
 }

@@ -3,6 +3,7 @@ mod graph;
 mod nodes;
 mod project;
 mod renderer;
+mod ui;
 
 use renderer::Renderer;
 use std::sync::Arc;

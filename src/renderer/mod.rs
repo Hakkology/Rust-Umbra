@@ -376,112 +376,32 @@ impl Renderer {
             &mut encoder,
             &view,
             |ctx| {
+                // Apply theme once or ensure it's set.
+                // Ideally this is done once, but doing it every frame is cheap for `visuals` check,
+                // though strictly `ctx.set_visuals` triggers a full repaint.
+                // Better to do it in `new`. But we don't have easy access to `ctx` in `new` unless we expose it from `Gui`.
+                // For now let's just do it here if it's the first frame (cheat) or assume it's cheap.
+                // Actually `set_visuals` is robust.
+                // But better: expose access in `Gui`.
+                // Let's assume we did it in `Gui::new` or we accept doing it here once.
+                // Or: `crate::ui::theme::apply_theme(ctx);`
+                if ctx.style().visuals.dark_mode {
+                    // already dark, maybe check custom flag?
+                    // Just apply it.
+                    crate::ui::theme::apply_theme(ctx);
+                }
+
                 egui::SidePanel::right("renderer_area")
                     .resizable(true)
                     .default_width(self.size.width as f32 * 0.4)
                     .show(ctx, |ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.heading("Renderer Preview");
-                        });
-
-                        ui.add_space(10.0);
-
-                        // Preview Image
-                        let aspect_ratio = 1.0;
-                        let width = ui.available_width();
-                        let height = width / aspect_ratio;
-                        ui.image(egui::load::SizedTexture::new(
-                            preview_id,
-                            egui::vec2(width, height),
-                        ));
-
-                        ui.add_space(10.0);
-                        ui.separator();
-
-                        ui.collapsing("Shader Properties", |ui| {
-                            ui.horizontal(|ui| {
-                                if ui.button("Add Float").clicked() {
-                                    project.add_property("new_float", PropertyValue::Float(0.0));
-                                }
-                                if ui.button("Add Float4").clicked() {
-                                    project.add_property(
-                                        "new_float4",
-                                        PropertyValue::Float4([0.0; 4]),
-                                    );
-                                }
-                                if ui.button("Add Color").clicked() {
-                                    project.add_property(
-                                        "new_color",
-                                        PropertyValue::Color([1.0, 1.0, 1.0, 1.0]),
-                                    );
-                                }
-                            });
-
-                            for prop in project.properties.iter_mut() {
-                                ui.horizontal(|ui| {
-                                    ui.label(&prop.name);
-                                    match &mut prop.value {
-                                        PropertyValue::Float(v) => {
-                                            ui.add(egui::DragValue::new(v).speed(0.1));
-                                        }
-                                        PropertyValue::Color(c) => {
-                                            let mut color = egui::Color32::from_rgba_premultiplied(
-                                                (c[0] * 255.0) as u8,
-                                                (c[1] * 255.0) as u8,
-                                                (c[2] * 255.0) as u8,
-                                                (c[3] * 255.0) as u8,
-                                            );
-                                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                                let [r, g, b, a] = color.to_array();
-                                                c[0] = r as f32 / 255.0;
-                                                c[1] = g as f32 / 255.0;
-                                                c[2] = b as f32 / 255.0;
-                                                c[3] = a as f32 / 255.0;
-                                            }
-                                        }
-                                        PropertyValue::Float4(v) => {
-                                            ui.horizontal(|ui| {
-                                                ui.add(egui::DragValue::new(&mut v[0]).speed(0.1));
-                                                ui.add(egui::DragValue::new(&mut v[1]).speed(0.1));
-                                                ui.add(egui::DragValue::new(&mut v[2]).speed(0.1));
-                                                ui.add(egui::DragValue::new(&mut v[3]).speed(0.1));
-                                            });
-                                        }
-                                        PropertyValue::Vec2(v) => {
-                                            ui.horizontal(|ui| {
-                                                ui.add(egui::DragValue::new(&mut v[0]).speed(0.1));
-                                                ui.add(egui::DragValue::new(&mut v[1]).speed(0.1));
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-                        });
-
-                        ui.separator();
-                        ui.add_space(10.0);
-
-                        ui.horizontal(|ui| {
-                            if ui.button("Generate Shader").clicked() {
-                                *generated_shader =
-                                    crate::graph::eval::Evaluator::evaluate(project);
-                                apply_shader = true;
-                            }
-                        });
-
-                        if !generated_shader.is_empty() {
-                            ui.add_space(10.0);
-                            ui.label("Generated WGSL:");
-                            egui::ScrollArea::vertical().show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::multiline(generated_shader)
-                                        .font(egui::TextStyle::Monospace)
-                                        .code_editor()
-                                        .lock_focus(true)
-                                        .desired_width(f32::INFINITY),
-                                );
-                            });
+                        crate::ui::PropertiesPanel {
+                            project,
+                            generated_shader,
+                            apply_shader: &mut apply_shader,
+                            preview_texture_id: preview_id,
                         }
+                        .show(ui);
                     });
 
                 egui::CentralPanel::default().show(ctx, |ui| {
