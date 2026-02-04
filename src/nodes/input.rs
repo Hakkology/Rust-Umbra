@@ -106,7 +106,7 @@ impl NodeImpl for ColorNode {
         }]
     }
     fn execute(&self, _inputs: &[String], properties: &HashMap<String, PropertyValue>) -> String {
-        if let Some(PropertyValue::Color(r, g, b, a)) = properties.get("value") {
+        if let Some(PropertyValue::Color([r, g, b, a])) = properties.get("value") {
             format!("vec4<f32>({:.3}, {:.3}, {:.3}, {:.3})", r, g, b, a)
         } else {
             "vec4<f32>(1.0, 1.0, 1.0, 1.0)".to_string()
@@ -115,7 +115,7 @@ impl NodeImpl for ColorNode {
     fn define_properties(&self) -> Vec<Property> {
         vec![Property {
             name: "value".to_string(),
-            value: PropertyValue::Color(1.0, 1.0, 1.0, 1.0),
+            value: PropertyValue::Color([1.0, 1.0, 1.0, 1.0]),
         }]
     }
 }

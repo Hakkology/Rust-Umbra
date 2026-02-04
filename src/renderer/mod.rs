@@ -1,4 +1,5 @@
-use crate::project::{PropertyValue, UmbraProject};
+use crate::common::PropertyValue;
+use crate::project::UmbraProject;
 use std::sync::Arc;
 use wgpu::{Device, Queue, Surface, SurfaceConfiguration, TextureView};
 use winit::window::Window;
@@ -239,8 +240,11 @@ impl Renderer {
             match prop.value {
                 PropertyValue::Float(_) => total_size += 16, // Align each to 16 for safety
                 PropertyValue::Vec2(_) => total_size += 16,
+                PropertyValue::Vec3(_) => total_size += 16,
+                PropertyValue::Vec4(_) => total_size += 16,
                 PropertyValue::Color(_) => total_size += 16,
-                PropertyValue::Float4(_) => total_size += 16,
+                PropertyValue::Int(_) => total_size += 16,
+                PropertyValue::Bool(_) => total_size += 16,
             }
         }
 
@@ -289,9 +293,10 @@ impl Renderer {
                 PropertyValue::Color(v) => {
                     data.extend_from_slice(bytemuck::bytes_of(&v));
                 }
-                PropertyValue::Float4(v) => {
+                PropertyValue::Vec4(v) => {
                     data.extend_from_slice(bytemuck::bytes_of(&v));
                 }
+                _ => {} // Other types not handled
             }
         }
 

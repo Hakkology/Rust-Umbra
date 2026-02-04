@@ -23,18 +23,18 @@ impl Evaluator {
 
         for prop in &project.properties {
             match prop.value {
-                crate::project::PropertyValue::Float(_) => {
+                crate::common::PropertyValue::Float(_) => {
                     shader.push_str(&format!("  {}: f32,\n", prop.name));
                     shader.push_str(&format!("  _pad_{}: vec3<f32>,\n", prop.name));
                 }
-                crate::project::PropertyValue::Vec2(_) => {
+                crate::common::PropertyValue::Vec2(_) => {
                     shader.push_str(&format!("  {}: vec2<f32>,\n", prop.name));
                     shader.push_str(&format!("  _pad_{}: vec2<f32>,\n", prop.name));
                 }
-                crate::project::PropertyValue::Color(_)
-                | crate::project::PropertyValue::Float4(_) => {
+                crate::common::PropertyValue::Color(_) | crate::common::PropertyValue::Vec4(_) => {
                     shader.push_str(&format!("  {}: vec4<f32>,\n", prop.name));
                 }
+                _ => {} // Other types not handled for shader generation
             }
         }
         shader.push_str("};\n\n");

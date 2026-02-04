@@ -137,24 +137,24 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
                                                 ui.add(egui::DragValue::new(v));
                                             });
                                         }
-                                        PropertyValue::Color(r, g, b, a) => {
+                                        PropertyValue::Color(c) => {
                                             ui.horizontal(|ui| {
                                                 ui.label(&prop_def.name);
                                                 let mut color =
                                                     egui::Color32::from_rgba_premultiplied(
-                                                        (*r * 255.0) as u8,
-                                                        (*g * 255.0) as u8,
-                                                        (*b * 255.0) as u8,
-                                                        (*a * 255.0) as u8,
+                                                        (c[0] * 255.0) as u8,
+                                                        (c[1] * 255.0) as u8,
+                                                        (c[2] * 255.0) as u8,
+                                                        (c[3] * 255.0) as u8,
                                                     );
                                                 if ui.color_edit_button_srgba(&mut color).changed()
                                                 {
                                                     let [r_new, g_new, b_new, a_new] =
                                                         color.to_array();
-                                                    *r = r_new as f32 / 255.0;
-                                                    *g = g_new as f32 / 255.0;
-                                                    *b = b_new as f32 / 255.0;
-                                                    *a = a_new as f32 / 255.0;
+                                                    c[0] = r_new as f32 / 255.0;
+                                                    c[1] = g_new as f32 / 255.0;
+                                                    c[2] = b_new as f32 / 255.0;
+                                                    c[3] = a_new as f32 / 255.0;
                                                 }
                                             });
                                         }

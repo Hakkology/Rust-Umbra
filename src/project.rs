@@ -1,13 +1,6 @@
+use crate::common::PropertyValue;
 use crate::graph::GraphEditor;
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PropertyValue {
-    Float(f32),
-    Color([f32; 4]),
-    Vec2([f32; 2]),
-    Float4([f32; 4]),
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShaderProperty {

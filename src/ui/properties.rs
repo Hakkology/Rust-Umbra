@@ -1,4 +1,5 @@
-use crate::project::{PropertyValue, UmbraProject};
+use crate::common::PropertyValue;
+use crate::project::UmbraProject;
 use egui::Ui;
 
 pub struct PropertiesPanel<'a> {
@@ -40,9 +41,9 @@ impl<'a> PropertiesPanel<'a> {
                     self.project
                         .add_property("new_float", PropertyValue::Float(0.0));
                 }
-                if ui.button("Add Float4").clicked() {
+                if ui.button("Add Vec4").clicked() {
                     self.project
-                        .add_property("new_float4", PropertyValue::Float4([0.0; 4]));
+                        .add_property("new_vec4", PropertyValue::Vec4([0.0; 4]));
                 }
                 if ui.button("Add Color").clicked() {
                     self.project
@@ -72,7 +73,7 @@ impl<'a> PropertiesPanel<'a> {
                                 c[3] = a as f32 / 255.0;
                             }
                         }
-                        PropertyValue::Float4(v) => {
+                        PropertyValue::Vec4(v) => {
                             ui.horizontal(|ui| {
                                 ui.add(egui::DragValue::new(&mut v[0]).speed(0.1));
                                 ui.add(egui::DragValue::new(&mut v[1]).speed(0.1));
@@ -86,6 +87,7 @@ impl<'a> PropertiesPanel<'a> {
                                 ui.add(egui::DragValue::new(&mut v[1]).speed(0.1));
                             });
                         }
+                        _ => {} // Other types not handled
                     }
                 });
             }
