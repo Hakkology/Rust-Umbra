@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 /// Unified property value type used across the entire application.
 /// This consolidates the previously separate PropertyValue enums.
@@ -11,6 +11,7 @@ pub enum PropertyValue {
     Color([f32; 4]),
     Int(i32),
     Bool(bool),
+    Texture(Option<PathBuf>),
 }
 
 impl Default for PropertyValue {
