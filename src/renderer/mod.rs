@@ -1,5 +1,5 @@
 use crate::common::PropertyValue;
-use crate::project::UmbraProject;
+use crate::file::UmbraProject;
 use std::sync::Arc;
 use wgpu::{Device, Queue, Surface, SurfaceConfiguration, TextureView};
 use winit::window::Window;
@@ -206,6 +206,11 @@ impl Renderer {
             Box::new(crate::ui::PropertiesPanel),
             true, // Default open
         );
+        ui_manager.register_view(
+            "info",
+            Box::new(crate::ui::InfoPanel),
+            false, // Default closed
+        );
 
         Self {
             surface,
@@ -400,7 +405,7 @@ impl Renderer {
                     egui::menu::bar(ui, |ui| {
                         ui.menu_button("File", |ui| {
                             if ui.button("New").clicked() {
-                                *project = crate::project::UmbraProject::new();
+                                *project = crate::file::UmbraProject::new();
                                 ui.close();
                             }
                             if ui.button("Save").clicked() {
@@ -410,8 +415,7 @@ impl Renderer {
                                 ui.close();
                             }
                             if ui.button("Load").clicked() {
-                                if let Some(new_project) =
-                                    crate::project::UmbraProject::load_dialog()
+                                if let Some(new_project) = crate::file::UmbraProject::load_dialog()
                                 {
                                     *project = new_project;
                                 }
@@ -419,7 +423,10 @@ impl Renderer {
                             }
                             ui.separator();
                             if ui.button("Export Shader").clicked() {
-                                // Add export logic or reused save dialog
+                                crate::file::export::save_wgsl_dialog(
+                                    generated_shader,
+                                    &project.name,
+                                );
                                 ui.close();
                             }
                         });
@@ -430,21 +437,30 @@ impl Renderer {
                         });
 
                         ui.menu_button("Window", |ui| {
-                            let is_open = ui_manager.is_open("properties");
-                            if ui.checkbox(&mut { is_open }, "Properties").clicked() {
+                            let mut properties_open = ui_manager.is_open("properties");
+                            if ui.checkbox(&mut properties_open, "Properties").clicked() {
                                 ui_manager.toggle("properties");
+                            }
+                        });
+
+                        ui.menu_button("Help", |ui| {
+                            if ui.button("About").clicked() {
+                                ui_manager.toggle("info");
+                                ui.close();
                             }
                         });
                     });
                 });
 
                 // Create AppContext
+                let mut close_requested = None;
                 let mut app_context = crate::ui::AppContext {
                     project,
                     generated_shader,
                     apply_shader: &mut apply_shader,
                     preview_texture_id: preview_id,
                     time: self.uniforms.time,
+                    close_requested: &mut close_requested,
                 };
 
                 // Render all registered views

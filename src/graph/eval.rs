@@ -1,6 +1,6 @@
+use crate::file::UmbraProject;
 use crate::graph::UmbraNode;
 use crate::nodes::registry::global_registry;
-use crate::project::UmbraProject;
 use egui_snarl::{InPinId, NodeId, Snarl};
 use std::collections::HashMap;
 

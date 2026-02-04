@@ -210,6 +210,24 @@ impl SnarlViewer<UmbraNode> for UmbraViewer {
         ui.label("Add Node");
         show_add_node_menu(ui, pos, snarl);
     }
+
+    fn has_node_menu(&mut self, _node: &UmbraNode) -> bool {
+        true
+    }
+
+    fn show_node_menu(
+        &mut self,
+        node_id: egui_snarl::NodeId,
+        _inputs: &[egui_snarl::InPin],
+        _outputs: &[egui_snarl::OutPin],
+        ui: &mut egui::Ui,
+        snarl: &mut egui_snarl::Snarl<UmbraNode>,
+    ) {
+        if ui.button("Delete").clicked() {
+            snarl.remove_node(node_id);
+            ui.close();
+        }
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -231,10 +249,6 @@ impl GraphEditor {
     pub fn draw(&mut self, ui: &mut egui::Ui, id_source: impl std::hash::Hash) {
         let style = egui_snarl::ui::SnarlStyle::new();
         self.snarl.show(&mut UmbraViewer, &style, id_source, ui);
-    }
-
-    pub fn show_node_menu(&mut self, ui: &mut egui::Ui, pos: egui::Pos2) {
-        show_add_node_menu(ui, pos, &mut self.snarl);
     }
 }
 

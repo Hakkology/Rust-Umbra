@@ -28,13 +28,13 @@ impl PropertiesPanel {
             generated_shader,
             apply_shader,
             preview_texture_id,
-            time,
+            time: _,
+            close_requested: _,
         } = app_context;
 
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.vertical_centered(|ui| {
                 ui.heading("Renderer Preview");
-                ui.label(format!("Time: {:.2}s", time));
             });
 
             ui.add_space(10.0);

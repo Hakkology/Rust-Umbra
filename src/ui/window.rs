@@ -1,6 +1,7 @@
 use crate::ui::framework::AppContext;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[allow(dead_code)]
 pub enum WindowKind {
     Floating,
     PanelRight,
@@ -21,10 +22,10 @@ pub struct WindowConfig {
 impl Default for WindowConfig {
     fn default() -> Self {
         Self {
-            title: "Untitled".to_string(),
+            title: "Window".to_string(),
             kind: WindowKind::Floating,
-            default_width: 300.0,
-            default_height: 400.0,
+            default_width: 400.0,
+            default_height: 300.0,
             resizable: true,
             collapsible: true,
         }
