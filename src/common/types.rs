@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use serde::{Serialize, Deserialize};
 
 /// Unified property value type used across the entire application.
 /// This consolidates the previously separate PropertyValue enums.

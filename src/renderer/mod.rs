@@ -260,6 +260,7 @@ impl Renderer {
                 PropertyValue::Color(_) => total_size += 16,
                 PropertyValue::Int(_) => total_size += 16,
                 PropertyValue::Bool(_) => total_size += 16,
+                PropertyValue::Texture(_) => {} // Textures are handled via separate bindings, not uniforms
             }
         }
 
@@ -311,7 +312,20 @@ impl Renderer {
                 PropertyValue::Vec4(v) => {
                     data.extend_from_slice(bytemuck::bytes_of(&v));
                 }
-                _ => {} // Other types not handled
+                PropertyValue::Vec3(v) => {
+                    data.extend_from_slice(bytemuck::bytes_of(&v));
+                    data.extend_from_slice(&[0u8; 4]); // Pad to 16
+                }
+                PropertyValue::Int(v) => {
+                    data.extend_from_slice(bytemuck::bytes_of(&v));
+                    data.extend_from_slice(&[0u8; 12]); // Pad to 16
+                }
+                PropertyValue::Bool(v) => {
+                    let val = if v { 1u32 } else { 0u32 };
+                    data.extend_from_slice(bytemuck::bytes_of(&val));
+                    data.extend_from_slice(&[0u8; 12]); // Pad to 16
+                }
+                PropertyValue::Texture(_) => {} // Skip textures in uniform buffer
             }
         }
 
